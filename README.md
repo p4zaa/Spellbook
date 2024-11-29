@@ -1,1 +1,1 @@
-# DataMagic
+# DataSpellbook
