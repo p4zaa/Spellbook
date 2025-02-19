@@ -1,3 +1,4 @@
 polars
 numpy
 fastexcel
+scikit-learn
