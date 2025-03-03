@@ -5,13 +5,16 @@ from pythainlp.tokenize import Tokenizer as th_tokenizer  # Requires PyThaiNLP f
 from nltk.tokenize import word_tokenize as en_tokenizer  # For English tokenization
 from nltk.corpus import stopwords
 from pythainlp.corpus import thai_stopwords
+from pathlib import Path
 
 # Download NLTK data for English tokenization (if not already installed)
 nltk.download('punkt')
 nltk.download('punkt_tab')
 nltk.download('stopwords')
 
-def plot_wordcloud(text: str, language: str = 'th', keep_stopwords: bool = True, font_path: str = 'spellbook\fonts\THSarabunNew.ttf', engine: str = 'newmm', figsize=(10, 6), interpolation="bilinear", title: str = None, width: int = 800, height: int = 400, save_path: str = None, transparent=True, **wordcloud_kwargs):
+FONT_FOLDER = Path(__file__).parent / 'fonts'
+
+def plot_wordcloud(text: str, language: str = 'th', keep_stopwords: bool = True, font_path: str = FONT_FOLDER + '/THSarabunNew.ttf', engine: str = 'newmm', figsize=(10, 6), interpolation="bilinear", title: str = None, width: int = 800, height: int = 400, save_path: str = None, transparent=True, **wordcloud_kwargs):
     """
     Plots a word cloud from text with language-specific tokenization and stopword handling.
 
