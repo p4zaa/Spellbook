@@ -32,6 +32,7 @@ def plot_wordcloud(text: str, language: str = 'th', keep_stopwords: bool = True,
     save_path (str): Path to save the word cloud image (default: None, which means the image is not saved).
     wordcloud_kwargs: Additional keyword arguments to customize the WordCloud instance (e.g., max_words, contour_color).
     """
+    print(FONT_FOLDER)
     # Tokenize the text based on the specified language
     if language == 'th':
         _tokenizer = th_tokenizer(custom_dict=None, engine=engine)
