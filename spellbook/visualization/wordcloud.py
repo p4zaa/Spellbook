@@ -1,16 +1,17 @@
 import matplotlib.pyplot as plt
-import nltk
 from wordcloud import WordCloud
-from pythainlp.tokenize import Tokenizer as th_tokenizer  # Requires PyThaiNLP for Thai tokenization
-from nltk.tokenize import word_tokenize as en_tokenizer  # For English tokenization
-from nltk.corpus import stopwords
-from pythainlp.corpus import thai_stopwords
 from pathlib import Path
+import utils
+#import nltk
+#from pythainlp.tokenize import Tokenizer as th_tokenizer  # Requires PyThaiNLP for Thai tokenization
+#from nltk.tokenize import word_tokenize as en_tokenizer  # For English tokenization
+#from nltk.corpus import stopwords
+#from pythainlp.corpus import thai_stopwords
 
 # Download NLTK data for English tokenization (if not already installed)
-nltk.download('punkt')
-nltk.download('punkt_tab')
-nltk.download('stopwords')
+#nltk.download('punkt')
+#nltk.download('punkt_tab')
+#nltk.download('stopwords')
 
 FONT_FOLDER = Path(__file__).parent / 'fonts'
 
@@ -34,7 +35,7 @@ def plot_wordcloud(text: str, language: str = 'th', keep_stopwords: bool = True,
     """
     #print(FONT_FOLDER)
     # Tokenize the text based on the specified language
-    if language == 'th':
+    '''if language == 'th':
         _tokenizer = th_tokenizer(custom_dict=None, engine=engine)
         words = _tokenizer.word_tokenize(text)  # Tokenize Thai text
     elif language == 'en':
@@ -50,7 +51,9 @@ def plot_wordcloud(text: str, language: str = 'th', keep_stopwords: bool = True,
 
     # Remove stopwords if keep_stopwords is False
     if not keep_stopwords:
-        words = [word for word in words if word.lower() not in stop_words]
+        words = [word for word in words if word.lower() not in stop_words]'''
+    
+    words = utils.tokenize_text(text, language=language, keep_stopwords=keep_stopwords, engine=engine)
 
     processed_text = " ".join(words)  # Join words for wordcloud input
 
