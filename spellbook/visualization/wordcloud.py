@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 from pathlib import Path
-from visualization import utils
+from spellbook.visualization import utils
 #import nltk
 #from pythainlp.tokenize import Tokenizer as th_tokenizer  # Requires PyThaiNLP for Thai tokenization
 #from nltk.tokenize import word_tokenize as en_tokenizer  # For English tokenization
