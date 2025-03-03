@@ -12,7 +12,7 @@ setup(
         "scikit-learn",
         # Add other dependencies here
     ],
-    package_data={"spellbook.fonts": ["*.ttf", "*.otf", "*.woff", "*.woff2"],},
+    package_data={"spellbook.visualization.fonts": ["*.ttf", "*.otf", "*.woff", "*.woff2"],},
     include_package_data=True,
     description="A collection of useful code snippets and utilities.",
     long_description=open("README.md").read(),
