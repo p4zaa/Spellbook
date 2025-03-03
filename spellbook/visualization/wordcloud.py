@@ -11,7 +11,7 @@ nltk.download('punkt')
 nltk.download('punkt_tab')
 nltk.download('stopwords')
 
-def plot_wordcloud(text: str, language: str = 'th', keep_stopwords: bool = True, font_path: str = 'fonts\THSarabunNew.ttf', engine: str = 'newmm', figsize=(10, 6), interpolation="bilinear", title: str = None, width: int = 800, height: int = 400, save_path: str = None, transparent=True, **wordcloud_kwargs):
+def plot_wordcloud(text: str, language: str = 'th', keep_stopwords: bool = True, font_path: str = 'spellbook\fonts\THSarabunNew.ttf', engine: str = 'newmm', figsize=(10, 6), interpolation="bilinear", title: str = None, width: int = 800, height: int = 400, save_path: str = None, transparent=True, **wordcloud_kwargs):
     """
     Plots a word cloud from text with language-specific tokenization and stopword handling.
 
