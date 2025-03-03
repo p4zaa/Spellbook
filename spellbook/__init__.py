@@ -1,0 +1,1 @@
+from spellbook.visualization.wordcloud import plot_wordcloud as wordcloud
