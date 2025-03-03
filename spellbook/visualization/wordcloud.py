@@ -12,7 +12,7 @@ nltk.download('punkt')
 nltk.download('punkt_tab')
 nltk.download('stopwords')
 
-FONT_FOLDER = Path(__file__) / 'spellbook' / 'fonts'
+FONT_FOLDER = Path(__file__).parent / 'spellbook' / 'fonts'
 
 def plot_wordcloud(text: str, language: str = 'th', keep_stopwords: bool = True, font_path: str = FONT_FOLDER / 'THSarabunNew.ttf', engine: str = 'newmm', figsize=(10, 6), interpolation="bilinear", title: str = None, width: int = 800, height: int = 400, save_path: str = None, transparent=True, **wordcloud_kwargs):
     """
