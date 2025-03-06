@@ -12,14 +12,15 @@ nltk.download('punkt')
 nltk.download('punkt_tab')
 nltk.download('stopwords')
 
-def tokenize_text(text: str, language: str = 'th', keep_stopwords: bool = True, engine: str = 'newmm') -> list:
+def tokenize_text(text: str, language: str = 'th', keep_stopwords: bool = True, keep_spaces: bool = False, engine: str = 'newmm') -> list:
     """
-    Tokenizes text based on the specified language and handles stopwords.
+    Tokenizes text based on the specified language and handles stopwords and spaces.
 
     Parameters:
     text (str): The input text to tokenize.
     language (str): The language of the text ('th' for Thai, 'en' for English).
     keep_stopwords (bool): Whether to keep or drop stopwords. True keeps stopwords, False drops them.
+    keep_spaces (bool): Whether to keep space characters in the output. False removes them (default).
     engine (str): The tokenizer engine for Thai text ('newmm', 'longest', 'lucene').
 
     Returns:
@@ -46,5 +47,9 @@ def tokenize_text(text: str, language: str = 'th', keep_stopwords: bool = True, 
     # Remove stopwords if keep_stopwords is False
     if not keep_stopwords:
         words = [word for word in words if word.lower() not in stop_words]
+
+    # Remove space characters if keep_spaces is False
+    if not keep_spaces:
+        words = [word for word in words if word.strip() != '']
 
     return words
