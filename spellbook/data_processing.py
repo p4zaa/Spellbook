@@ -361,3 +361,51 @@ def dataset_preprocessing_for_multilabel_classification_tasks(
     )
 
     return train, test
+
+def merge_one_hot_labels(
+    df: pl.DataFrame,
+    label_cols: list[str],
+    output_col: str = "labels",
+    empty_list_as_null: bool = True,
+) -> pl.DataFrame:
+    """
+    Merge one-hot encoded label columns into a single list column of active labels.
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        The input Polars DataFrame containing one-hot encoded label columns.
+    label_cols : List[str]
+        List of column names representing one-hot encoded labels.
+    output_col : str, optional
+        The name of the output list column, by default "labels".
+    empty_list_as_null : bool, optional
+        If True, converts empty lists in the output to nulls, by default True.
+
+    Returns
+    -------
+    pl.DataFrame
+        A new DataFrame with an additional column `output_col` containing lists of active label names.
+    """
+
+    # Ensure nulls are filled with 0 to treat them as inactive
+    df = df.with_columns([pl.col(col).fill_null(0).alias(col) for col in label_cols])
+
+    # Create list of labels where the value == 1
+    df = df.with_columns([
+        pl.concat_list([
+            pl.when(pl.col(col) == 1).then(pl.lit(col)).otherwise(None)
+            for col in label_cols
+        ]).drop_nulls().alias(output_col)
+    ])
+
+    # Optionally replace empty lists with null
+    if empty_list_as_null:
+        df = df.with_columns([
+            pl.when(pl.col(output_col).list.len() == 0)
+              .then(None)
+              .otherwise(pl.col(output_col))
+              .alias(output_col)
+        ])
+
+    return df
