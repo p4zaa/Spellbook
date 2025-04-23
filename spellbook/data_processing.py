@@ -370,13 +370,14 @@ def merge_one_hot_labels(
 ) -> pl.DataFrame:
     """
     Merge one-hot encoded label columns into a single list column of active labels.
+    Automatically treats missing columns as all-zero.
 
     Parameters
     ----------
     df : pl.DataFrame
-        The input Polars DataFrame containing one-hot encoded label columns.
+        The input Polars DataFrame with or without all label columns present.
     label_cols : List[str]
-        List of column names representing one-hot encoded labels.
+        List of expected one-hot label column names.
     output_col : str, optional
         The name of the output list column, by default "labels".
     empty_list_as_null : bool, optional
@@ -388,10 +389,16 @@ def merge_one_hot_labels(
         A new DataFrame with an additional column `output_col` containing lists of active label names.
     """
 
-    # Ensure nulls are filled with 0 to treat them as inactive
+    # Add missing columns as 0
+    existing_cols = set(df.columns)
+    missing_cols = [col for col in label_cols if col not in existing_cols]
+    if missing_cols:
+        df = df.with_columns([pl.lit(0).alias(col) for col in missing_cols])
+
+    # Ensure nulls are treated as 0
     df = df.with_columns([pl.col(col).fill_null(0).alias(col) for col in label_cols])
 
-    # Create list of labels where the value == 1
+    # Build the list of label names for rows where value == 1
     df = df.with_columns([
         pl.concat_list([
             pl.when(pl.col(col) == 1).then(pl.lit(col)).otherwise(None)
