@@ -118,8 +118,44 @@ def independent_cascade(
     
     return active, steps
 
+def estimate_spread(G, seeds, mc=100, **kwargs):
+    """Estimate expected spread with Monte Carlo."""
+    return sum(len(independent_cascade(G, set(seeds), **kwargs)[0]) for _ in range(mc)) / mc
 
-def celf(G, k: int, prob_attr: str = 'weight', default_prob: float = 0.1, **kwargs) -> List[Any]:
+def celf(G, k, prob_attr='weight', default_prob=0.1, mc=100, **kwargs):
+    import heapq
+
+    if k < 1:
+        raise ValueError("k must be at least 1")
+    if k > len(G.nodes()):
+        raise ValueError(f"k ({k}) cannot exceed number of nodes ({len(G)})")
+
+    # Step 1: initial marginal gains
+    pq = []
+    for node in G.nodes():
+        spread = estimate_spread(G, [node], mc=mc, prob_attr=prob_attr, default_prob=default_prob, **kwargs)
+        heapq.heappush(pq, (-spread, node, 0))  # negative for max-heap
+
+    seeds = []
+    spread_S = 0
+
+    # Step 2: lazy selection
+    while len(seeds) < k:
+        gain, node, last_eval = heapq.heappop(pq)
+        gain = -gain
+
+        if last_eval == len(seeds):  # already evaluated w.r.t current S
+            seeds.append(node)
+            spread_S += gain
+        else:
+            # recompute marginal gain
+            spread_with_node = estimate_spread(G, seeds + [node], mc=mc, prob_attr=prob_attr, default_prob=default_prob, **kwargs)
+            marginal_gain = spread_with_node - spread_S
+            heapq.heappush(pq, (-marginal_gain, node, len(seeds)))
+
+    return seeds
+
+def _celf_deprecated(G, k: int, prob_attr: str = 'weight', default_prob: float = 0.1, **kwargs) -> List[Any]:
     """
     Cost-Effective Lazy Forward (CELF) algorithm for influence maximization.
     
