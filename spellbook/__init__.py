@@ -17,5 +17,12 @@ __author__ = "Pathompong Muangthong"
 __email__ = "pathompong.mua@gmail.com"
 __url__ = "https://github.com/p4zaa/SpellBook"
 
-# Empty __all__ to prevent direct imports
+# Import submodules to make them available as spellbook.data, spellbook.text, etc.
+from . import data
+from . import text
+from . import viz
+from . import utils
+from . import ml
+
+# Empty __all__ to prevent direct imports of functions
 __all__ = []
