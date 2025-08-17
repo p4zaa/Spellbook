@@ -12,7 +12,7 @@ from typing import Set, List, Tuple, Any
 def independent_cascade(
     G, 
     seeds: Set[Any], 
-    max_steps: int = 99999,
+    max_steps: int = 9999,
     prob_attr: str = 'weight',
     default_prob: float = 0.1
 ) -> Tuple[Set[Any], List[Set[Any]]]:
@@ -28,7 +28,7 @@ def independent_cascade(
     Parameters:
         G: NetworkX directed graph with edge attributes containing activation probabilities
         seeds (Set[Any]): Set of seed nodes to start the cascade from
-        max_steps (int, optional): Maximum number of simulation steps. Defaults to 99999.
+        max_steps (int, optional): Maximum number of simulation steps. Defaults to 9999.
         prob_attr (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'weight'.
         default_prob (float, optional): Default probability to use for edges without probability attribute. Defaults to 0.1.
 
