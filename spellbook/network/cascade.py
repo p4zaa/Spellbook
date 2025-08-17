@@ -9,10 +9,10 @@ import random
 from typing import Set, List, Tuple, Any
 
 
-def independent_cascade_once(
+def independent_cascade(
     G, 
     seeds: Set[Any], 
-    max_steps: int = 10
+    max_steps: int = 99999
 ) -> Tuple[Set[Any], List[Set[Any]]]:
     """
     Run one Independent Cascade (IC) simulation and return the set of activated nodes 
@@ -26,7 +26,7 @@ def independent_cascade_once(
     Parameters:
         G: NetworkX directed graph with edge attribute 'prob' containing activation probabilities
         seeds (Set[Any]): Set of seed nodes to start the cascade from
-        max_steps (int, optional): Maximum number of simulation steps. Defaults to 10.
+        max_steps (int, optional): Maximum number of simulation steps. Defaults to 99999.
 
     Returns:
         Tuple[Set[Any], List[Set[Any]]]: A tuple containing:
@@ -49,7 +49,7 @@ def independent_cascade_once(
         >>> 
         >>> # Run simulation starting from node A
         >>> seeds = {"A"}
-        >>> active_nodes, step_activations = spellbook.network.independent_cascade_once(G, seeds)
+        >>> active_nodes, step_activations = spellbook.network.independent_cascade(G, seeds)
         >>> print(f"Final activated nodes: {active_nodes}")
         >>> print(f"Activations per step: {step_activations}")
 
@@ -98,3 +98,86 @@ def independent_cascade_once(
         steps.append(set(active))
     
     return active, steps
+
+
+def celf(G, k: int) -> List[Any]:
+    """
+    Cost-Effective Lazy Forward (CELF) algorithm for influence maximization.
+    
+    CELF is an efficient algorithm for finding the k most influential nodes in a network
+    for influence maximization under the Independent Cascade model. It uses the lazy
+    evaluation technique to reduce the number of spread computations needed.
+    
+    Parameters:
+        G: NetworkX directed graph with edge attribute 'prob' containing activation probabilities
+        k (int): Number of seed nodes to select
+        
+    Returns:
+        List[Any]: List of k seed nodes that maximize influence spread
+        
+    Raises:
+        ValueError: If k is less than 1 or greater than number of nodes
+        KeyError: If graph edges don't have 'prob' attribute
+        
+    Example:
+        >>> import networkx as nx
+        >>> import spellbook
+        >>> 
+        >>> # Build a simple directed graph
+        >>> G = nx.DiGraph()
+        >>> edges = [("A", "B", 0.4), ("B", "C", 0.5), ("C", "A", 0.3), ("A", "D", 0.6)]
+        >>> for u, v, p in edges:
+        ...     G.add_edge(u, v, prob=p)
+        >>> 
+        >>> # Find top 2 influential nodes
+        >>> seeds = spellbook.network.celf(G, k=2)
+        >>> print(f"Selected seed nodes: {seeds}")
+        
+    Use Case:
+        - Social network influence maximization
+        - Viral marketing campaign design
+        - Information diffusion optimization
+        - Network immunization strategies
+        
+    Reference:
+        Leskovec, J., Krause, A., Guestrin, C., Faloutsos, C., VanBriesen, J., & Glance, N. (2007).
+        Cost-effective outbreak detection in networks. In Proceedings of the 13th ACM SIGKDD
+        international conference on Knowledge discovery and data mining (pp. 420-429).
+    """
+    import heapq
+    
+    # Validate input
+    if k < 1:
+        raise ValueError("k must be at least 1")
+    
+    if k > len(G.nodes()):
+        raise ValueError(f"k ({k}) cannot be greater than number of nodes ({len(G.nodes())})")
+    
+    # Initial marginal gains
+    pq = []
+    for node in G.nodes():
+        active_nodes, _ = independent_cascade(G, {node})
+        spread = len(active_nodes)
+        heapq.heappush(pq, (-spread, node, 0))  # max-heap, iteration=0
+    
+    seeds = []
+    iter_num = 1
+    
+    while len(seeds) < k:
+        gain, node, last_iter = heapq.heappop(pq)
+        
+        if last_iter == iter_num - 1:
+            # This is the current best node, add it to seeds
+            seeds.append(node)
+        else:
+            # Recompute marginal gain
+            active_with_seeds, _ = independent_cascade(G, set(seeds + [node]))
+            active_current, _ = independent_cascade(G, set(seeds))
+            spread_with_seeds = len(active_with_seeds)
+            spread_current = len(active_current)
+            marginal_gain = spread_with_seeds - spread_current
+            heapq.heappush(pq, (-marginal_gain, node, iter_num - 1))
+        
+        iter_num += 1
+    
+    return seeds

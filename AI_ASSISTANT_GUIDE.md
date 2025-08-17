@@ -113,7 +113,8 @@ Spellbook/
 **Purpose**: Network analysis and diffusion modeling utilities.
 
 **Key Functions**:
-- `independent_cascade_once()`: Run Independent Cascade model simulations
+- `independent_cascade()`: Run Independent Cascade model simulations
+- `celf()`: Cost-Effective Lazy Forward algorithm for influence maximization
 
 **Features**:
 - Information diffusion modeling
@@ -121,7 +122,7 @@ Spellbook/
 - Social network analysis
 - Viral marketing simulation
 
-**Use Cases**: Social network analysis, influence modeling, information diffusion studies.
+**Use Cases**: Social network analysis, influence modeling, information diffusion studies, influence maximization.
 
 ## Dependencies and Installation
 

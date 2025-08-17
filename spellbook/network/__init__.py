@@ -7,8 +7,9 @@ This module provides functions for:
 - Graph-based algorithms
 """
 
-from .cascade import independent_cascade_once
+from .cascade import independent_cascade, celf
 
 __all__ = [
-    "independent_cascade_once",
+    "independent_cascade",
+    "celf",
 ]

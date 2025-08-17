@@ -240,6 +240,65 @@ spellbook.viz.plot_wordcloud(
 )
 ```
 
+## Network Analysis Module (`spellbook.network`)
+
+### Cascade Functions (`spellbook.network.cascade`)
+
+#### `independent_cascade()`
+**Purpose**: Run one Independent Cascade simulation and return the number of activated nodes.
+
+**Parameters**:
+- `G`: NetworkX directed graph with edge attribute 'prob' containing activation probabilities
+- `seeds` (Set[Any]): Set of seed nodes to start the cascade from
+- `max_steps` (int, optional): Maximum number of simulation steps. Defaults to 1000.
+
+**Returns**: Tuple[Set[Any], List[Set[Any]]] - A tuple containing:
+- Set of all activated nodes at the end of simulation
+- List of sets, where each set contains the cumulative activated nodes at each step
+
+**Dependencies**: `networkx`
+
+**Use Case**: Information diffusion modeling and influence analysis.
+
+**Example**:
+```python
+import spellbook
+import networkx as nx
+
+G = nx.DiGraph()
+edges = [("A", "B", 0.4), ("B", "C", 0.5), ("C", "A", 0.3)]
+for u, v, p in edges:
+    G.add_edge(u, v, prob=p)
+
+active_nodes, step_activations = spellbook.network.independent_cascade(G, {"A"})
+```
+
+#### `celf()`
+**Purpose**: Cost-Effective Lazy Forward algorithm for influence maximization.
+
+**Parameters**:
+- `G`: NetworkX directed graph with edge attribute 'prob' containing activation probabilities
+- `k` (int): Number of seed nodes to select
+
+**Returns**: List[Any] - List of k seed nodes that maximize influence spread
+
+**Dependencies**: `networkx`
+
+**Use Case**: Finding the most influential nodes in a network for marketing or information campaigns.
+
+**Example**:
+```python
+import spellbook
+import networkx as nx
+
+G = nx.DiGraph()
+edges = [("A", "B", 0.4), ("B", "C", 0.5), ("C", "A", 0.3), ("A", "D", 0.6)]
+for u, v, p in edges:
+    G.add_edge(u, v, prob=p)
+
+seeds = spellbook.network.celf(G, k=2)
+```
+
 ## Utilities Module (`spellbook.utils`)
 
 ### File Operation Functions (`spellbook.utils.file_operations`)
@@ -322,6 +381,24 @@ csv_files = spellbook.utils.get_file_paths("data/", file_type=".csv")
 for file_path in csv_files:
     # Process file...
     pass
+```
+
+### Network Analysis Workflow
+```python
+import spellbook
+import networkx as nx
+
+# 1. Build network
+G = nx.DiGraph()
+edges = [("A", "B", 0.4), ("B", "C", 0.5), ("C", "A", 0.3), ("A", "D", 0.6)]
+for u, v, p in edges:
+    G.add_edge(u, v, prob=p)
+
+# 2. Test influence spread
+spread = spellbook.network.independent_cascade(G, {"A"})
+
+# 3. Find most influential nodes
+seeds = spellbook.network.celf(G, k=2)
 ```
 
 ## Error Handling
