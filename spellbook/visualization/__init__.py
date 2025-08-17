@@ -1,0 +1,1 @@
+from .wordcloud import plot_wordcloud as wordcloud

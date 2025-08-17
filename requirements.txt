@@ -2,3 +2,9 @@ polars
 numpy
 fastexcel
 scikit-learn
+matplotlib
+wordcloud
+pythainlp
+nltk
+xlsxwriter
+bloxs
