@@ -17,3 +17,6 @@ nltk
 
 # Additional utilities (optional)
 bloxs
+
+# Network analysis (optional)
+networkx
