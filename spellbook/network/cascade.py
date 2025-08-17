@@ -123,6 +123,62 @@ def estimate_spread(G, seeds, mc=100, **kwargs):
     return sum(len(independent_cascade(G, set(seeds), **kwargs)[0]) for _ in range(mc)) / mc
 
 def celf(G, k, prob_attr='weight', default_prob=0.1, mc=100, **kwargs):
+    """
+    Cost-Effective Lazy Forward (CELF) algorithm for influence maximization.
+    
+    CELF is an efficient greedy algorithm to select the k most influential nodes in a network
+    under the Independent Cascade (IC) model. It improves computational efficiency compared 
+    to naive greedy by using lazy evaluations of marginal gains.
+
+    Parameters:
+        G: NetworkX directed graph
+            Graph where edges represent influence links and may contain activation probabilities
+            as attributes (e.g., 'weight').
+        k (int):
+            Number of seed nodes to select.
+        prob_attr (str, optional):
+            Name of the edge attribute storing activation probabilities. Defaults to 'weight'.
+        default_prob (float, optional):
+            Default probability used for edges without the probability attribute. Must be between 0 and 1.
+            Defaults to 0.1.
+        mc (int, optional):
+            Number of Monte Carlo simulations per marginal gain estimation. Higher values give more
+            accurate expected spread estimates but increase runtime. Defaults to 100.
+        **kwargs:
+            Additional arguments passed to `independent_cascade` (e.g., `max_steps`).
+
+    Returns:
+        List[Any]:
+            List of k seed nodes that maximize expected influence spread.
+
+    Raises:
+        ValueError: If `k < 1`, if `k > number of nodes in G`, or if `default_prob` is not between 0 and 1.
+
+    Example:
+        >>> import networkx as nx
+        >>> # Build a directed graph with probabilities
+        >>> G = nx.DiGraph()
+        >>> edges = [("A", "B", 0.4), ("B", "C", 0.5), ("C", "A", 0.3), ("A", "D", 0.6)]
+        >>> for u, v, p in edges:
+        ...     G.add_edge(u, v, weight=p)
+        >>> 
+        >>> # Select top-2 influential nodes
+        >>> seeds = celf(G, k=2, mc=200, prob_attr='weight')
+        >>> print(seeds)
+        ['A', 'B']
+
+    Use Case:
+        - Viral marketing: selecting users to maximize product adoption
+        - Social influence analysis: identifying opinion leaders
+        - Epidemiology: finding critical nodes for immunization
+        - Rumor spreading / misinformation containment
+
+    Reference:
+        Leskovec, J., Krause, A., Guestrin, C., Faloutsos, C., VanBriesen, J., & Glance, N. (2007).
+        Cost-effective outbreak detection in networks. In *Proceedings of the 13th ACM SIGKDD 
+        international conference on Knowledge discovery and data mining* (pp. 420–429).
+    """
+
     import heapq
 
     if k < 1:
