@@ -215,6 +215,93 @@ def celf(G, k, prob_attr='weight', default_prob=0.1, mc=100, **kwargs):
 
     return seeds
 
+def celfpp(G, k, prob_attr='weight', default_prob=0.1, mc=100, **kwargs):
+    """
+    CELF++ algorithm for influence maximization under the Independent Cascade model.
+    
+    CELF++ improves on CELF by reducing the number of marginal gain recomputations 
+    using two lazy evaluations: one w.r.t. the current seed set, and one w.r.t. the 
+    last added seed node. This further speeds up greedy selection of influential nodes.
+    
+    Parameters:
+        G: NetworkX directed graph
+            Graph where edges represent influence links and may contain activation 
+            probabilities as edge attributes (e.g., 'weight').
+        k (int):
+            Number of seed nodes to select.
+        prob_attr (str, optional):
+            Name of the edge attribute storing activation probabilities. Defaults to 'weight'.
+        default_prob (float, optional):
+            Default probability used for edges without the probability attribute. 
+            Must be between 0 and 1. Defaults to 0.1.
+        mc (int, optional):
+            Number of Monte Carlo simulations per marginal gain estimation. Higher values 
+            give more accurate expected spread estimates but increase runtime. Defaults to 100.
+        **kwargs:
+            Additional arguments passed to `independent_cascade` (e.g., `max_steps`).
+
+    Returns:
+        List[Any]:
+            List of k seed nodes that maximize expected influence spread.
+
+    Raises:
+        ValueError: If `k < 1`, if `k > number of nodes in G`, or if `default_prob` is not between 0 and 1.
+
+    Example:
+        >>> import networkx as nx
+        >>> G = nx.DiGraph()
+        >>> edges = [("A", "B", 0.4), ("B", "C", 0.5), ("C", "A", 0.3), ("A", "D", 0.6)]
+        >>> for u, v, p in edges:
+        ...     G.add_edge(u, v, weight=p)
+        >>> seeds = celfpp(G, k=2, mc=200)
+        >>> print(seeds)
+        ['A', 'B']
+
+    Reference:
+        Leskovec, J., Krause, A., Guestrin, C., Faloutsos, C., VanBriesen, J., & Glance, N. (2007).
+        Cost-effective outbreak detection in networks. In *Proceedings of the 13th ACM SIGKDD*.
+    """
+    import heapq
+
+    if k < 1:
+        raise ValueError("k must be at least 1")
+    if k > len(G.nodes()):
+        raise ValueError(f"k ({k}) cannot exceed number of nodes ({len(G)})")
+    if not 0 <= default_prob <= 1:
+        raise ValueError("default_prob must be between 0 and 1")
+
+    # Step 1: compute initial spreads
+    pq = []
+    for node in G.nodes():
+        spread = estimate_spread(G, [node], mc=mc, prob_attr=prob_attr, default_prob=default_prob, **kwargs)
+        # tuple: (-gain, node, last_eval_seedset_size, gain_w_last_seed, last_seed)
+        heapq.heappush(pq, (-spread, node, 0, spread, None))
+
+    seeds = []
+    spread_S = 0
+    last_seed = None
+
+    # Step 2: lazy greedy with CELF++
+    while len(seeds) < k:
+        gain, node, last_eval, gain_w_last, last_seed_eval = heapq.heappop(pq)
+        gain = -gain
+
+        if last_eval == len(seeds):  # already evaluated w.r.t full seed set
+            seeds.append(node)
+            spread_S += gain
+            last_seed = node
+        elif last_seed is not None and last_seed_eval == last_seed:
+            # already evaluated w.r.t last seed, just update marginal gain
+            marginal_gain = gain_w_last
+            heapq.heappush(pq, (-marginal_gain, node, len(seeds), gain_w_last, last_seed))
+        else:
+            # recompute marginal gain w.r.t current seed set
+            spread_with_node = estimate_spread(G, seeds + [node], mc=mc, prob_attr=prob_attr, default_prob=default_prob, **kwargs)
+            marginal_gain = spread_with_node - spread_S
+            heapq.heappush(pq, (-marginal_gain, node, len(seeds), marginal_gain, last_seed))
+
+    return seeds
+
 def _celf_deprecated(G, k: int, prob_attr: str = 'weight', default_prob: float = 0.1, **kwargs) -> List[Any]:
     """
     Cost-Effective Lazy Forward (CELF) algorithm for influence maximization.
