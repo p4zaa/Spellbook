@@ -95,7 +95,11 @@ def independent_cascade(
         
         # Each newly active node attempts to activate its neighbors
         for u in newly_active:
-            for v in G.successors(u):
+            if G.is_directed():
+                neighbors = G.successors(u)
+            else:
+                neighbors = G.neighbors(u)
+            for v in neighbors:
                 if v not in active:
                     # Get probability from edge attribute or use default
                     try:
