@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="spellbook",
     version="0.1.0",
-    packages=find_packages(include=["spellbook", "spellbook.*"]),
+    packages=find_packages(include=["spellbook", "spellbook.*", "spellbook.data_processing", "spellbook.text_processing", "spellbook.visualization", "spellbook.utils", "spellbook.ml_utils"]),
     install_requires=[
         "numpy",
         "matplotlib",

@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 from pathlib import Path
-from spellbook.visualization import utils
+from spellbook.text_processing import tokenize_text
 #import nltk
 #from pythainlp.tokenize import Tokenizer as th_tokenizer  # Requires PyThaiNLP for Thai tokenization
 #from nltk.tokenize import word_tokenize as en_tokenizer  # For English tokenization
@@ -53,7 +53,7 @@ def plot_wordcloud(text: str, language: str = 'th', keep_stopwords: bool = True,
     if not keep_stopwords:
         words = [word for word in words if word.lower() not in stop_words]'''
     
-    words = utils.tokenize_text(text, language=language, keep_stopwords=keep_stopwords, engine=engine)
+    words = tokenize_text(text, language=language, keep_stopwords=keep_stopwords, engine=engine)
 
     processed_text = " ".join(words)  # Join words for wordcloud input
 

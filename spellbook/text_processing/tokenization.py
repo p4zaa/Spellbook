@@ -1,16 +1,23 @@
-import matplotlib.pyplot as plt
+"""
+Text tokenization utilities for Spellbook.
+
+This module provides functions for:
+- Thai and English text tokenization
+- Stopword handling
+- Language-specific text processing
+"""
+
 import nltk
-from wordcloud import WordCloud
 from pythainlp.tokenize import Tokenizer as th_tokenizer  # Requires PyThaiNLP for Thai tokenization
 from nltk.tokenize import word_tokenize as en_tokenizer  # For English tokenization
 from nltk.corpus import stopwords
 from pythainlp.corpus import thai_stopwords
-from pathlib import Path
 
 # Download NLTK data for English tokenization (if not already installed)
 nltk.download('punkt')
 nltk.download('punkt_tab')
 nltk.download('stopwords')
+
 
 def tokenize_text(text: str, language: str = 'th', keep_stopwords: bool = True, keep_spaces: bool = False, engine: str = 'newmm') -> list:
     """
