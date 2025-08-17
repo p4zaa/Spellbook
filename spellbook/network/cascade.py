@@ -12,7 +12,9 @@ from typing import Set, List, Tuple, Any
 def independent_cascade(
     G, 
     seeds: Set[Any], 
-    max_steps: int = 99999
+    max_steps: int = 99999,
+    prob_attr: str = 'prob',
+    default_prob: float = 0.1
 ) -> Tuple[Set[Any], List[Set[Any]]]:
     """
     Run one Independent Cascade (IC) simulation and return the set of activated nodes 
@@ -24,9 +26,11 @@ def independent_cascade(
     or the maximum number of steps is reached.
 
     Parameters:
-        G: NetworkX directed graph with edge attribute 'prob' containing activation probabilities
+        G: NetworkX directed graph with edge attributes containing activation probabilities
         seeds (Set[Any]): Set of seed nodes to start the cascade from
         max_steps (int, optional): Maximum number of simulation steps. Defaults to 99999.
+        prob_attr (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'prob'.
+        default_prob (float, optional): Default probability to use for edges without probability attribute. Defaults to 0.1.
 
     Returns:
         Tuple[Set[Any], List[Set[Any]]]: A tuple containing:
@@ -34,8 +38,7 @@ def independent_cascade(
             - List of sets, where each set contains the cumulative activated nodes at each step
 
     Raises:
-        ValueError: If seeds set is empty or contains invalid nodes
-        KeyError: If graph edges don't have 'prob' attribute
+        ValueError: If seeds set is empty or contains invalid nodes, or if default_prob is not between 0 and 1
 
     Example:
         >>> import networkx as nx
@@ -52,6 +55,18 @@ def independent_cascade(
         >>> active_nodes, step_activations = spellbook.network.independent_cascade(G, seeds)
         >>> print(f"Final activated nodes: {active_nodes}")
         >>> print(f"Activations per step: {step_activations}")
+        >>> 
+        >>> # Use custom probability attribute name
+        >>> G2 = nx.DiGraph()
+        >>> for u, v, p in edges:
+        ...     G2.add_edge(u, v, weight=p)
+        >>> active_nodes, step_activations = spellbook.network.independent_cascade(G2, seeds, prob_attr='weight')
+        >>> 
+        >>> # Use default probability for all edges
+        >>> G3 = nx.DiGraph()
+        >>> for u, v in [("A", "B"), ("B", "C"), ("C", "A")]:
+        ...     G3.add_edge(u, v)
+        >>> active_nodes, step_activations = spellbook.network.independent_cascade(G3, seeds, default_prob=0.5)
 
     Use Case:
         - Social network influence analysis
@@ -66,6 +81,9 @@ def independent_cascade(
     if not all(node in G.nodes() for node in seeds):
         raise ValueError("All seed nodes must exist in the graph")
     
+    if not 0 <= default_prob <= 1:
+        raise ValueError("default_prob must be between 0 and 1")
+    
     # Initialize simulation state
     active = set(seeds)
     newly_active = set(seeds)
@@ -79,10 +97,11 @@ def independent_cascade(
         for u in newly_active:
             for v in G.successors(u):
                 if v not in active:
+                    # Get probability from edge attribute or use default
                     try:
-                        p = G[u][v]["prob"]
+                        p = G[u][v][prob_attr]
                     except KeyError:
-                        raise KeyError(f"Edge ({u}, {v}) missing 'prob' attribute")
+                        p = default_prob
                     
                     # Attempt activation based on probability
                     if random.random() < p:
@@ -100,7 +119,7 @@ def independent_cascade(
     return active, steps
 
 
-def celf(G, k: int) -> List[Any]:
+def celf(G, k: int, prob_attr: str = 'prob', default_prob: float = 0.1) -> List[Any]:
     """
     Cost-Effective Lazy Forward (CELF) algorithm for influence maximization.
     
@@ -109,15 +128,16 @@ def celf(G, k: int) -> List[Any]:
     evaluation technique to reduce the number of spread computations needed.
     
     Parameters:
-        G: NetworkX directed graph with edge attribute 'prob' containing activation probabilities
+        G: NetworkX directed graph with edge attributes containing activation probabilities
         k (int): Number of seed nodes to select
+        prob_attr (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'prob'.
+        default_prob (float, optional): Default probability to use for edges without probability attribute. Defaults to 0.1.
         
     Returns:
         List[Any]: List of k seed nodes that maximize influence spread
         
     Raises:
-        ValueError: If k is less than 1 or greater than number of nodes
-        KeyError: If graph edges don't have 'prob' attribute
+        ValueError: If k is less than 1 or greater than number of nodes, or if default_prob is not between 0 and 1
         
     Example:
         >>> import networkx as nx
@@ -132,6 +152,18 @@ def celf(G, k: int) -> List[Any]:
         >>> # Find top 2 influential nodes
         >>> seeds = spellbook.network.celf(G, k=2)
         >>> print(f"Selected seed nodes: {seeds}")
+        >>> 
+        >>> # Use custom probability attribute
+        >>> G2 = nx.DiGraph()
+        >>> for u, v, p in edges:
+        ...     G2.add_edge(u, v, weight=p)
+        >>> seeds = spellbook.network.celf(G2, k=2, prob_attr='weight')
+        >>> 
+        >>> # Use default probability for all edges
+        >>> G3 = nx.DiGraph()
+        >>> for u, v in [("A", "B"), ("B", "C"), ("C", "A"), ("A", "D")]:
+        ...     G3.add_edge(u, v)
+        >>> seeds = spellbook.network.celf(G3, k=2, default_prob=0.5)
         
     Use Case:
         - Social network influence maximization
@@ -153,10 +185,13 @@ def celf(G, k: int) -> List[Any]:
     if k > len(G.nodes()):
         raise ValueError(f"k ({k}) cannot be greater than number of nodes ({len(G.nodes())})")
     
+    if not 0 <= default_prob <= 1:
+        raise ValueError("default_prob must be between 0 and 1")
+    
     # Initial marginal gains
     pq = []
     for node in G.nodes():
-        active_nodes, _ = independent_cascade(G, {node})
+        active_nodes, _ = independent_cascade(G, {node}, prob_attr=prob_attr, default_prob=default_prob)
         spread = len(active_nodes)
         heapq.heappush(pq, (-spread, node, 0))  # max-heap, iteration=0
     
@@ -171,8 +206,8 @@ def celf(G, k: int) -> List[Any]:
             seeds.append(node)
         else:
             # Recompute marginal gain
-            active_with_seeds, _ = independent_cascade(G, set(seeds + [node]))
-            active_current, _ = independent_cascade(G, set(seeds))
+            active_with_seeds, _ = independent_cascade(G, set(seeds + [node]), prob_attr=prob_attr, default_prob=default_prob)
+            active_current, _ = independent_cascade(G, set(seeds), prob_attr=prob_attr, default_prob=default_prob)
             spread_with_seeds = len(active_with_seeds)
             spread_current = len(active_current)
             marginal_gain = spread_with_seeds - spread_current

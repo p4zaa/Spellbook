@@ -248,9 +248,11 @@ spellbook.viz.plot_wordcloud(
 **Purpose**: Run one Independent Cascade simulation and return the number of activated nodes.
 
 **Parameters**:
-- `G`: NetworkX directed graph with edge attribute 'prob' containing activation probabilities
+- `G`: NetworkX directed graph with edge attributes containing activation probabilities
 - `seeds` (Set[Any]): Set of seed nodes to start the cascade from
-- `max_steps` (int, optional): Maximum number of simulation steps. Defaults to 1000.
+- `max_steps` (int, optional): Maximum number of simulation steps. Defaults to 99999.
+- `prob_attr` (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'prob'.
+- `default_prob` (float, optional): Default probability to use for edges without probability attribute. Defaults to 0.1.
 
 **Returns**: Tuple[Set[Any], List[Set[Any]]] - A tuple containing:
 - Set of all activated nodes at the end of simulation
@@ -271,14 +273,28 @@ for u, v, p in edges:
     G.add_edge(u, v, prob=p)
 
 active_nodes, step_activations = spellbook.network.independent_cascade(G, {"A"})
+
+# Use custom probability attribute
+G2 = nx.DiGraph()
+for u, v, p in edges:
+    G2.add_edge(u, v, weight=p)
+active_nodes, step_activations = spellbook.network.independent_cascade(G2, {"A"}, prob_attr='weight')
+
+# Use default probability for all edges
+G3 = nx.DiGraph()
+for u, v in [("A", "B"), ("B", "C"), ("C", "A")]:
+    G3.add_edge(u, v)
+active_nodes, step_activations = spellbook.network.independent_cascade(G3, {"A"}, default_prob=0.5)
 ```
 
 #### `celf()`
 **Purpose**: Cost-Effective Lazy Forward algorithm for influence maximization.
 
 **Parameters**:
-- `G`: NetworkX directed graph with edge attribute 'prob' containing activation probabilities
+- `G`: NetworkX directed graph with edge attributes containing activation probabilities
 - `k` (int): Number of seed nodes to select
+- `prob_attr` (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'prob'.
+- `default_prob` (float, optional): Default probability to use for edges without probability attribute. Defaults to 0.1.
 
 **Returns**: List[Any] - List of k seed nodes that maximize influence spread
 
@@ -297,6 +313,18 @@ for u, v, p in edges:
     G.add_edge(u, v, prob=p)
 
 seeds = spellbook.network.celf(G, k=2)
+
+# Use custom probability attribute
+G2 = nx.DiGraph()
+for u, v, p in edges:
+    G2.add_edge(u, v, weight=p)
+seeds = spellbook.network.celf(G2, k=2, prob_attr='weight')
+
+# Use default probability for all edges
+G3 = nx.DiGraph()
+for u, v in [("A", "B"), ("B", "C"), ("C", "A"), ("A", "D")]:
+    G3.add_edge(u, v)
+seeds = spellbook.network.celf(G3, k=2, default_prob=0.5)
 ```
 
 ## Utilities Module (`spellbook.utils`)
