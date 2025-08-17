@@ -119,7 +119,7 @@ def independent_cascade(
     return active, steps
 
 
-def celf(G, k: int, prob_attr: str = 'weight', default_prob: float = 0.1) -> List[Any]:
+def celf(G, k: int, prob_attr: str = 'weight', default_prob: float = 0.1, **kwargs) -> List[Any]:
     """
     Cost-Effective Lazy Forward (CELF) algorithm for influence maximization.
     
@@ -191,7 +191,7 @@ def celf(G, k: int, prob_attr: str = 'weight', default_prob: float = 0.1) -> Lis
     # Initial marginal gains
     pq = []
     for node in G.nodes():
-        active_nodes, _ = independent_cascade(G, {node}, prob_attr=prob_attr, default_prob=default_prob)
+        active_nodes, _ = independent_cascade(G, {node}, prob_attr=prob_attr, default_prob=default_prob, **kwargs)
         spread = len(active_nodes)
         heapq.heappush(pq, (-spread, node, 0))  # max-heap, iteration=0
     
