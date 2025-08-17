@@ -53,7 +53,7 @@ def plot_wordcloud(text: str, language: str = 'th', keep_stopwords: bool = True,
     
     # Lazy import for tokenization
     try:
-        from spellbook.text_processing import tokenize_text
+        from spellbook.text import tokenize_text
         words = tokenize_text(text, language=language, keep_stopwords=keep_stopwords, engine=engine)
     except ImportError as e:
         raise ImportError(

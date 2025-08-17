@@ -43,22 +43,22 @@ pip install bloxs
 ```
 spellbook/
 ├── __init__.py                 # Main package API
-├── data_processing/           # DataFrame and data manipulation utilities
+├── data/                      # DataFrame and data manipulation utilities
 │   ├── __init__.py
 │   ├── dataframe.py          # DataFrame flattening, deduplication, label merging
 │   ├── encoding.py           # One-hot encoding utilities
 │   └── splitting.py          # Train-test splitting with special handling
-├── text_processing/          # Text and NLP utilities
+├── text/                     # Text and NLP utilities
 │   ├── __init__.py
 │   └── tokenization.py       # Multi-language tokenization
-├── visualization/            # Visualization utilities
+├── viz/                      # Visualization utilities
 │   ├── __init__.py
 │   ├── wordcloud.py          # Word cloud generation
 │   └── fonts/               # Font assets
-├── utils/                   # General utilities
+├── utils/                    # General utilities
 │   ├── __init__.py
 │   └── file_operations.py   # File handling utilities
-└── ml_utils/               # Machine learning utilities (extensible)
+└── ml/                      # Machine learning utilities (extensible)
     └── __init__.py
 ```
 

@@ -10,27 +10,27 @@ This package provides tools for:
 """
 
 # Core data processing functions
-from .data_processing.dataframe import (
+from .data.dataframe import (
     flatten_dataframe,
     drop_duplicates_multilabel,
     merge_one_hot_labels
 )
 
-from .data_processing.encoding import (
+from .data.encoding import (
     one_hot_encode_labels,
     one_hot_encode_list_column
 )
 
-from .data_processing.splitting import (
+from .data.splitting import (
     train_test_one_instance_handling_split,
     dataset_preprocessing_for_multilabel_classification_tasks
 )
 
 # Text processing utilities
-from .text_processing.tokenization import tokenize_text
+from .text.tokenization import tokenize_text
 
 # Visualization utilities
-from .visualization.wordcloud import plot_wordcloud
+from .viz.wordcloud import plot_wordcloud
 
 # File utilities
 from .utils.file_operations import get_file_paths

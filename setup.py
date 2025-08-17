@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="spellbook",
     version="0.1.0",
-    packages=find_packages(include=["spellbook", "spellbook.*", "spellbook.data_processing", "spellbook.text_processing", "spellbook.visualization", "spellbook.utils", "spellbook.ml_utils"]),
+    packages=find_packages(include=["spellbook", "spellbook.*", "spellbook.data", "spellbook.text", "spellbook.viz", "spellbook.utils", "spellbook.ml"]),
     install_requires=[
         "numpy",
         "matplotlib",
@@ -12,7 +12,7 @@ setup(
         "scikit-learn",
         # Add other dependencies here
     ],
-    package_data={"spellbook.visualization.fonts": ["*.ttf", "*.otf", "*.woff", "*.woff2"],},
+    package_data={"spellbook.viz.fonts": ["*.ttf", "*.otf", "*.woff", "*.woff2"],},
     include_package_data=True,
     description="A collection of useful code snippets and utilities.",
     long_description=open("README.md").read(),
