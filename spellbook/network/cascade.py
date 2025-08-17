@@ -13,7 +13,7 @@ def independent_cascade(
     G, 
     seeds: Set[Any], 
     max_steps: int = 99999,
-    prob_attr: str = 'prob',
+    prob_attr: str = 'weight',
     default_prob: float = 0.1
 ) -> Tuple[Set[Any], List[Set[Any]]]:
     """
@@ -29,7 +29,7 @@ def independent_cascade(
         G: NetworkX directed graph with edge attributes containing activation probabilities
         seeds (Set[Any]): Set of seed nodes to start the cascade from
         max_steps (int, optional): Maximum number of simulation steps. Defaults to 99999.
-        prob_attr (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'prob'.
+        prob_attr (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'weight'.
         default_prob (float, optional): Default probability to use for edges without probability attribute. Defaults to 0.1.
 
     Returns:
@@ -119,7 +119,7 @@ def independent_cascade(
     return active, steps
 
 
-def celf(G, k: int, prob_attr: str = 'prob', default_prob: float = 0.1) -> List[Any]:
+def celf(G, k: int, prob_attr: str = 'weight', default_prob: float = 0.1) -> List[Any]:
     """
     Cost-Effective Lazy Forward (CELF) algorithm for influence maximization.
     
@@ -130,7 +130,7 @@ def celf(G, k: int, prob_attr: str = 'prob', default_prob: float = 0.1) -> List[
     Parameters:
         G: NetworkX directed graph with edge attributes containing activation probabilities
         k (int): Number of seed nodes to select
-        prob_attr (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'prob'.
+        prob_attr (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'weight'.
         default_prob (float, optional): Default probability to use for edges without probability attribute. Defaults to 0.1.
         
     Returns:

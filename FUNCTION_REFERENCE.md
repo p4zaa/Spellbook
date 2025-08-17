@@ -251,7 +251,7 @@ spellbook.viz.plot_wordcloud(
 - `G`: NetworkX directed graph with edge attributes containing activation probabilities
 - `seeds` (Set[Any]): Set of seed nodes to start the cascade from
 - `max_steps` (int, optional): Maximum number of simulation steps. Defaults to 99999.
-- `prob_attr` (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'prob'.
+- `prob_attr` (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'weight'.
 - `default_prob` (float, optional): Default probability to use for edges without probability attribute. Defaults to 0.1.
 
 **Returns**: Tuple[Set[Any], List[Set[Any]]] - A tuple containing:
@@ -293,7 +293,7 @@ active_nodes, step_activations = spellbook.network.independent_cascade(G3, {"A"}
 **Parameters**:
 - `G`: NetworkX directed graph with edge attributes containing activation probabilities
 - `k` (int): Number of seed nodes to select
-- `prob_attr` (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'prob'.
+- `prob_attr` (str, optional): Name of edge attribute containing activation probabilities. Defaults to 'weight'.
 - `default_prob` (float, optional): Default probability to use for edges without probability attribute. Defaults to 0.1.
 
 **Returns**: List[Any] - List of k seed nodes that maximize influence spread
