@@ -12,8 +12,30 @@ A collection of useful data science and NLP utilities for efficient data process
 
 ## Installation
 
+### Full Installation (All Features)
 ```bash
 pip install -e .
+pip install -r requirements.txt
+```
+
+### Core Installation (Data Processing Only)
+```bash
+pip install -e .
+pip install -r requirements-core.txt
+```
+
+### Optional Dependencies
+Install additional dependencies as needed:
+
+```bash
+# For text processing (Thai/English)
+pip install pythainlp nltk
+
+# For visualization
+pip install matplotlib wordcloud
+
+# For additional utilities
+pip install bloxs
 ```
 
 ## Project Structure
@@ -151,13 +173,32 @@ excel_files = get_file_paths("data/", file_type=".xlsx")
 
 ## Dependencies
 
-- polars: Fast DataFrame operations
-- scikit-learn: Machine learning utilities
-- matplotlib: Visualization
-- wordcloud: Word cloud generation
-- pythainlp: Thai language processing
-- nltk: English language processing
-- numpy: Numerical operations
+### Core Dependencies (Required)
+- **polars**: Fast DataFrame operations
+- **numpy**: Numerical operations  
+- **scikit-learn**: Machine learning utilities
+- **fastexcel**: Excel file processing
+
+### Optional Dependencies
+- **matplotlib**: Visualization
+- **wordcloud**: Word cloud generation
+- **pythainlp**: Thai language processing
+- **nltk**: English language processing
+- **xlsxwriter**: Excel writing
+- **bloxs**: Additional utilities
+
+> **Note**: The package uses lazy imports, so you only need to install the dependencies for the features you plan to use. If you try to use a feature without the required dependency, you'll get a helpful error message with installation instructions.
+
+### Dependency Management
+
+The package is designed to be lightweight and only load dependencies when needed:
+
+- **Core functionality** (DataFrame operations, encoding, splitting) works with just the core dependencies
+- **Text processing** requires `pythainlp` (Thai) and/or `nltk` (English)
+- **Visualization** requires `matplotlib` and `wordcloud`
+- **Excel operations** require `fastexcel` and `xlsxwriter`
+
+This approach allows users to install only what they need, reducing package size and avoiding conflicts.
 
 ## Contributing
 

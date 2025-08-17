@@ -8,10 +8,6 @@ This module provides functions for:
 """
 
 import nltk
-from pythainlp.tokenize import Tokenizer as th_tokenizer  # Requires PyThaiNLP for Thai tokenization
-from nltk.tokenize import word_tokenize as en_tokenizer  # For English tokenization
-from nltk.corpus import stopwords
-from pythainlp.corpus import thai_stopwords
 
 # Download NLTK data for English tokenization (if not already installed)
 nltk.download('punkt')
@@ -35,21 +31,42 @@ def tokenize_text(text: str, language: str = 'th', keep_stopwords: bool = True, 
 
     Raises:
     ValueError: If the language is not 'th' or 'en'.
+    ImportError: If required dependencies are not installed.
     """
-    # Tokenize the text based on the specified language
+    # Lazy imports - only import when needed
     if language == 'th':
+        try:
+            from pythainlp.tokenize import Tokenizer as th_tokenizer
+            from pythainlp.corpus import thai_stopwords
+        except ImportError:
+            raise ImportError(
+                "PyThaiNLP is required for Thai text processing. "
+                "Install it with: pip install pythainlp"
+            )
+        
         _tokenizer = th_tokenizer(custom_dict=None, engine=engine)
         words = _tokenizer.word_tokenize(text)  # Tokenize Thai text
+        
+        # Stopwords handling
+        stop_words = thai_stopwords()
+        
     elif language == 'en':
+        try:
+            from nltk.tokenize import word_tokenize as en_tokenizer
+            from nltk.corpus import stopwords
+        except ImportError:
+            raise ImportError(
+                "NLTK is required for English text processing. "
+                "Install it with: pip install nltk"
+            )
+        
         words = en_tokenizer(text)  # Tokenize English text using NLTK
+        
+        # Stopwords handling
+        stop_words = set(stopwords.words('english'))
+        
     else:
         raise ValueError("Language must be 'th' for Thai or 'en' for English.")
-    
-    # Stopwords handling
-    if language == 'th':
-        stop_words = thai_stopwords()
-    else:
-        stop_words = set(stopwords.words('english'))
 
     # Remove stopwords if keep_stopwords is False
     if not keep_stopwords:

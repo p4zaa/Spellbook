@@ -1,7 +1,5 @@
 import matplotlib.pyplot as plt
-from wordcloud import WordCloud
 from pathlib import Path
-from spellbook.text_processing import tokenize_text
 #import nltk
 #from pythainlp.tokenize import Tokenizer as th_tokenizer  # Requires PyThaiNLP for Thai tokenization
 #from nltk.tokenize import word_tokenize as en_tokenizer  # For English tokenization
@@ -53,10 +51,28 @@ def plot_wordcloud(text: str, language: str = 'th', keep_stopwords: bool = True,
     if not keep_stopwords:
         words = [word for word in words if word.lower() not in stop_words]'''
     
-    words = tokenize_text(text, language=language, keep_stopwords=keep_stopwords, engine=engine)
+    # Lazy import for tokenization
+    try:
+        from spellbook.text_processing import tokenize_text
+        words = tokenize_text(text, language=language, keep_stopwords=keep_stopwords, engine=engine)
+    except ImportError as e:
+        raise ImportError(
+            f"Text processing dependencies not available: {e}. "
+            "For Thai text, install: pip install pythainlp. "
+            "For English text, install: pip install nltk."
+        )
 
     processed_text = " ".join(words)  # Join words for wordcloud input
 
+    # Lazy import for WordCloud
+    try:
+        from wordcloud import WordCloud
+    except ImportError:
+        raise ImportError(
+            "WordCloud is required for word cloud generation. "
+            "Install it with: pip install wordcloud"
+        )
+    
     # Generate word cloud with additional keyword arguments
     wordcloud = WordCloud(
         font_path=font_path,  # Use Thai font if specified
