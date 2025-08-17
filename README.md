@@ -38,6 +38,17 @@ pip install matplotlib wordcloud
 pip install bloxs
 ```
 
+## Usage Philosophy
+
+This package follows an **explicit import** philosophy for better code clarity and maintainability:
+
+- **No direct access**: Functions are not available through `spellbook.function_name()`
+- **Explicit imports**: Users must import from specific modules: `from spellbook.data import flatten_dataframe`
+- **Clear organization**: Each module has a focused responsibility
+- **Better IDE support**: Explicit imports provide better autocomplete and documentation
+
+This approach makes it clear where each function comes from and encourages users to understand the package structure.
+
 ## Project Structure
 
 ```
@@ -68,7 +79,8 @@ spellbook/
 
 ```python
 import polars as pl
-from spellbook import flatten_dataframe, drop_duplicates_multilabel, one_hot_encode_labels
+from spellbook.data import flatten_dataframe, drop_duplicates_multilabel
+from spellbook.data import one_hot_encode_labels, merge_one_hot_labels
 
 # Flatten DataFrame with multiple header rows
 df = pl.read_csv("data.csv")
@@ -88,7 +100,7 @@ df_encoded, unique_labels = one_hot_encode_labels(df, ['label1', 'label2'])
 ### Text Processing
 
 ```python
-from spellbook import tokenize_text
+from spellbook.text import tokenize_text
 
 # Thai text tokenization
 thai_text = "สวัสดีครับ นี่คือตัวอย่างข้อความภาษาไทย"
@@ -102,7 +114,7 @@ tokens = tokenize_text(english_text, language='en', keep_stopwords=False)
 ### Visualization
 
 ```python
-from spellbook import plot_wordcloud
+from spellbook.viz import plot_wordcloud
 
 # Generate Thai word cloud
 plot_wordcloud(
@@ -123,7 +135,7 @@ plot_wordcloud(
 ### Dataset Splitting
 
 ```python
-from spellbook import dataset_preprocessing_for_multilabel_classification_tasks
+from spellbook.data import dataset_preprocessing_for_multilabel_classification_tasks
 
 # Preprocess and split multilabel dataset
 train_df, test_df = dataset_preprocessing_for_multilabel_classification_tasks(
@@ -138,7 +150,7 @@ train_df, test_df = dataset_preprocessing_for_multilabel_classification_tasks(
 ### File Operations
 
 ```python
-from spellbook import get_file_paths
+from spellbook.utils import get_file_paths
 
 # Get all CSV files in a directory
 csv_files = get_file_paths("data/", file_type=".csv")
@@ -149,7 +161,7 @@ excel_files = get_file_paths("data/", file_type=".xlsx")
 
 ## API Reference
 
-### Data Processing
+### Data Processing (`spellbook.data`)
 
 - `flatten_dataframe()`: Flatten DataFrames with multiple header rows
 - `drop_duplicates_multilabel()`: Handle duplicate entries with multilabel data
@@ -159,17 +171,35 @@ excel_files = get_file_paths("data/", file_type=".xlsx")
 - `train_test_one_instance_handling_split()`: Split datasets with single-instance handling
 - `dataset_preprocessing_for_multilabel_classification_tasks()`: Complete multilabel preprocessing pipeline
 
-### Text Processing
+### Text Processing (`spellbook.text`)
 
 - `tokenize_text()`: Multi-language text tokenization with stopword handling
 
-### Visualization
+### Visualization (`spellbook.viz`)
 
 - `plot_wordcloud()`: Generate word clouds with language-specific support
 
-### Utilities
+### Utilities (`spellbook.utils`)
 
 - `get_file_paths()`: Discover files by extension in directories
+
+### Import Examples
+
+```python
+# Data processing
+from spellbook.data import flatten_dataframe, drop_duplicates_multilabel
+from spellbook.data.encoding import one_hot_encode_labels
+from spellbook.data.splitting import train_test_one_instance_handling_split
+
+# Text processing
+from spellbook.text import tokenize_text
+
+# Visualization
+from spellbook.viz import plot_wordcloud
+
+# Utilities
+from spellbook.utils import get_file_paths
+```
 
 ## Dependencies
 
