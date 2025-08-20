@@ -1,52 +1,129 @@
 #import httpx
 import asyncio
 import json
+from typing import Dict, List, Optional
+from urllib.parse import urlparse
+
 from crawl4ai import AsyncWebCrawler
 from crawl4ai import JsonCssExtractionStrategy
 from crawl4ai.async_configs import BrowserConfig, CrawlerRunConfig
+from pprint import pprint
 
-async def extract_amazon_products():
-    browser_config = BrowserConfig(browser_type="chromium", headless=True)
+# ------------------------------------------------------------
+# Domain-aware schemas with a consistent output contract
+# Required fields across all schemas: id, title, content, date
+# ------------------------------------------------------------
 
-    crawler_config = CrawlerRunConfig(
-        extraction_strategy=JsonCssExtractionStrategy(
-            schema={
-                "name": "Amazon Product Search Results",
-                "baseSelector": "[data-component-type='s-search-result']",
-                "fields": [
-                    {"name": "title", "selector": "a h2 span", "type": "text"},
-                    {"name": "url", "selector": ".puisg-col-inner a", "type": "attribute", "attribute": "href"},
-                    {"name": "image", "selector": ".s-image", "type": "attribute", "attribute": "src"},
-                    {"name": "rating", "selector": ".a-icon-star-small .a-icon-alt", "type": "text"},
-                    {"name": "reviews_count", "selector": "[data-csa-c-func-deps='aui-da-a-popover'] ~ span span", "type": "text"},
-                    {"name": "price", "selector": ".a-price .a-offscreen", "type": "text"},
-                    {"name": "original_price", "selector": ".a-price.a-text-price .a-offscreen", "type": "text"},
-                    {"name": "sponsored", "selector": ".puis-sponsored-label-text", "type": "exists"},
-                    {"name": "delivery_info", "selector": "[data-cy='delivery-recipe'] .a-color-base.a-text-bold", "type": "text", "multiple": True},
-                ]
-            }
-        )
+def _normalize_domain(hostname: str) -> str:
+    """Return the registrable domain key used for schema lookup."""
+    if not hostname:
+        return ""
+    hostname = hostname.lower()
+    # Strip common subdomains
+    for prefix in ("www.", "m."):
+        if hostname.startswith(prefix):
+            hostname = hostname[len(prefix):]
+    return hostname
+
+
+def _schema_for_domain(domain: str) -> Dict:
+    """Return a JsonCssExtractionStrategy schema for the given domain.
+
+    The schema MUST provide these fields: id, title, content, date.
+    """
+    # Pantip topic page (single main post)
+    if domain.endswith("pantip.com"):
+        return {
+            "baseSelector": ".display-post-wrapper.main-post.type",
+            "fields": [
+                {"name": "id", "type": "attribute", "attribute": "id"},
+                {"name": "title", "selector": "h1.display-post-title", "type": "text"},
+                {"name": "content", "selector": "div.display-post-story", "type": "text"},
+                {"name": "date", "selector": "abbr.timeago", "type": "attribute", "attribute": "data-utime"},
+            ],
+        }
+
+    # X/Twitter single-tweet page
+    if domain.endswith("x.com") or domain.endswith("twitter.com"):
+        return {
+            "baseSelector": "article[data-testid='tweet']",
+            "fields": [
+                # Full tweet URL (id embedded inside). Using href keeps things robust across DOM changes
+                {"name": "id", "selector": "a[href*='/status/']", "type": "attribute", "attribute": "href"},
+                # Use display name as a stable title surrogate for tweets
+                {"name": "title", "selector": "div[data-testid='User-Name'] span", "type": "text"},
+                {"name": "content", "selector": "div[data-testid='tweetText']", "type": "text"},
+                {"name": "date", "selector": "time[datetime]", "type": "attribute", "attribute": "datetime"},
+            ],
+        }
+
+    # Generic fallback using common metadata and structures
+    # Note: We scope from html so selectors can target head metadata as well
+    return {
+        "baseSelector": "html",
+        "fields": [
+            {"name": "id", "selector": "link[rel='canonical']", "type": "attribute", "attribute": "href"},
+            {"name": "title", "selector": "meta[property='og:title']", "type": "attribute", "attribute": "content"},
+            {"name": "content", "selector": "article", "type": "text"},
+            {"name": "date", "selector": "meta[property='article:published_time']", "type": "attribute", "attribute": "content"},
+        ],
+    }
+
+
+def _build_config_for_url(url: str) -> CrawlerRunConfig:
+    domain = _normalize_domain(urlparse(url).hostname or "")
+    schema = _schema_for_domain(domain)
+    return CrawlerRunConfig(
+        extraction_strategy=JsonCssExtractionStrategy(schema=schema)
     )
 
-    url = "https://www.amazon.com/s?k=Samsung+Galaxy+Tab"
+
+async def crawl(urls: List[str], *, browser_type: str = "chromium", headless: bool = True) -> List[Dict[str, Optional[str]]]:
+    """Crawl a list of URLs using domain-specific schemas.
+
+    Ensures consistent fields across outputs: id, title, content, date.
+
+    Args:
+        urls: List of page URLs to crawl.
+        browser_type: Browser engine for the underlying crawler.
+        headless: Whether to run the browser in headless mode.
+
+    Returns:
+        A list where each item corresponds to a URL, containing
+        at least keys: id, title, content, date. Missing values are None.
+    """
+    if not urls:
+        return []
+
+    browser_config = BrowserConfig(browser_type=browser_type, headless=headless)
+    async def _crawl_one(crawler: AsyncWebCrawler, url: str) -> Dict[str, Optional[str]]:
+        try:
+            config = _build_config_for_url(url)
+            result = await crawler.arun(url=url, config=config)
+
+            record: Dict[str, Optional[str]] = {"id": None, "title": None, "content": None, "date": None}
+
+            if result and result.extracted_content:
+                try:
+                    extracted = json.loads(result.extracted_content)
+                    if isinstance(extracted, list) and extracted:
+                        first = extracted[0]
+                        record["id"] = first.get("id")
+                        record["title"] = first.get("title")
+                        record["content"] = first.get("content")
+                        record["date"] = first.get("date")
+                except Exception:
+                    pass
+
+            return record
+        except Exception:
+            return {"id": None, "title": None, "content": None, "date": None}
 
     async with AsyncWebCrawler(config=browser_config) as crawler:
-        result = await crawler.arun(url=url, config=crawler_config)
+        tasks = [asyncio.create_task(_crawl_one(crawler, u)) for u in urls]
+        results = await asyncio.gather(*tasks, return_exceptions=False)
+        return list(results)
 
-        if result and result.extracted_content:
-            products = json.loads(result.extracted_content)
-
-            for product in products:
-                print("\nProduct Details:")
-                print(f"Title: {product.get('title')}")
-                print(f"Price: {product.get('price')}")
-                print(f"Original Price: {product.get('original_price')}")
-                print(f"Rating: {product.get('rating')}")
-                print(f"Reviews: {product.get('reviews_count')}")
-                print(f"Sponsored: {'Yes' if product.get('sponsored') else 'No'}")
-                if product.get("delivery_info"):
-                    print(f"Delivery: {' '.join(product['delivery_info'])}")
-                print("-" * 80)
 
 '''async def crawl():
     async with httpx.AsyncClient() as client:

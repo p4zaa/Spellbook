@@ -1,3 +1,7 @@
-from .crawler import *
+from . import crawler
+from . import search
 
-__all__ = []
+__all__ = [
+    "crawler",
+    "search",
+]

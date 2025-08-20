@@ -24,6 +24,7 @@ from . import viz
 from . import utils
 from . import ml
 from . import network
+from . import scraper
 
 # Empty __all__ to prevent direct imports of functions
 __all__ = []
