@@ -27,3 +27,4 @@ httpx
 
 # Web scraping (optional)
 crawl4ai
+asyncio
