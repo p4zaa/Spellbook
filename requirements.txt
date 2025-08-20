@@ -20,3 +20,10 @@ bloxs
 
 # Network analysis (optional)
 networkx
+
+# HTTP requests (optional)
+requests
+httpx
+
+# Web scraping (optional)
+crawl4ai
