@@ -110,6 +110,11 @@ def _google_extraction_config(max_paginate: int = 3) -> CrawlerRunConfig:
                 "name": "related_content",
                 "type": "text",
                 "multiple": True
+            },
+            {
+                "name": "date_string",
+                "selector": "div > span.YrbPuc > span",
+                "type": "text"
             }
         ],
     }
