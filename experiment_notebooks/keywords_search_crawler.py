@@ -2,33 +2,33 @@ import polars as pl
 import asyncio
 import sys
 
-#sys.path.append('/Users/pa/Local Documents/GitHub Repositories/Spellbook') #for macos
-sys.path.append(r'C:\Users\patom\OneDrive\Documents\Repo\Spellbook') # for windows
+sys.path.append('/Users/pa/Local Documents/GitHub Repositories/Spellbook') #for macos
+#sys.path.append(r'C:\Users\patom\OneDrive\Documents\Repo\Spellbook') # for windows
 
 from spellbook import scraper, utils as sb_utils
 
 keywords = [
     "travel card",
-    "บัตรเดบิต",
-    "โมบายแบงก์กิ้ง",
-    "กองทุน",
-    "ประกันชีวิต",
-    "ประกันภัย",
-    "บัตรกดเงินสด",
-    "บัตรเครดิต",
-    "สินเชื่อรถ",
-    "สินเชื่อบ้าน",
-    "สินเชื่อส่วนบุคคล",
-    "บัญชี",
+    #"บัตรเดบิต",
+    #"โมบายแบงก์กิ้ง",
+    #"กองทุน",
+    #"ประกันชีวิต",
+    #"ประกันภัย",
+    #"บัตรกดเงินสด",
+    #"บัตรเครดิต",
+    #"สินเชื่อรถ",
+    #"สินเชื่อบ้าน",
+    #"สินเชื่อส่วนบุคคล",
+    #"บัญชี",
     ]
 
 site_list = [
   'pantip.com',
-  'x.com',
-  'facebook.com',
-  'tiktok.com',
-  'twitter.com',
-  'instagram.com',
+  #'x.com',
+  #'facebook.com',
+  #'tiktok.com',
+  #'twitter.com',
+  #'instagram.com',
 ]
 
 results_list = []
@@ -45,7 +45,9 @@ async def main():
                 provider="google",
                 max_results=None,
                 return_schema=True,
-                max_paginate=100,
+                max_paginate=3,
+                headless=False,
+                pagination_mode='multi_window',
             )
 
             # Add 'site' and 'keyword' to each result dict
