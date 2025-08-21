@@ -34,6 +34,14 @@ class CaptchaDetector:
             "bot detection"
         ]
         
+        # No results indicators by domain
+        self.no_results_indicators = {
+            "google.com": ["#botstuff > div > div.mnr-c", "#OotqVd", "no results found", "did not match any documents"],
+            "duckduckgo.com": ["no results", "no matches found", "try different keywords"],
+            "bing.com": ["no results", "no matches found", "try different keywords"],
+            "pantip.com": ["ไม่พบผลลัพธ์", "no results", "ไม่พบข้อมูล"]
+        }
+        
         # Common CAPTCHA redirect patterns by domain
         self.captcha_redirects = {
             "google.com": ["google.com/sorry", "google.com/recaptcha"],
@@ -116,6 +124,44 @@ class CaptchaDetector:
         
         if found_indicators:
             return True, "html_content", f"Found indicators: {', '.join(found_indicators)}"
+        
+        return False, "", ""
+
+    def detect_no_results(self, html_content: str, domain: str = "") -> Tuple[bool, str, str]:
+        """
+        Detect when there are no search results.
+        
+        Args:
+            html_content: The HTML content to check for no results indicators
+            domain: Domain to check for specific no results patterns
+            
+        Returns:
+            Tuple of (has_no_results, no_results_type, details)
+        """
+        if not html_content:
+            return False, "", ""
+            
+        html_lower = html_content.lower()
+        
+        # Check domain-specific no results indicators
+        if domain and domain in self.no_results_indicators:
+            for indicator in self.no_results_indicators[domain]:
+                if indicator in html_lower:
+                    return True, f"{domain}_no_results", f"Found no results indicator: {indicator}"
+        
+        # Check for generic no results patterns
+        generic_no_results = [
+            "no results found",
+            "no matches found",
+            "did not match any documents",
+            "try different keywords",
+            "no data found",
+            "empty results"
+        ]
+        
+        for pattern in generic_no_results:
+            if pattern in html_lower:
+                return True, "generic_no_results", f"Found generic no results: {pattern}"
         
         return False, "", ""
 
@@ -266,6 +312,20 @@ def detect_captcha(url: str = "", html_content: str = "", domain: str = "") -> T
         Tuple of (is_captcha, captcha_type, details)
     """
     return captcha_detector.detect_captcha(url, html_content, domain)
+
+
+def detect_no_results(html_content: str = "", domain: str = "") -> Tuple[bool, str, str]:
+    """
+    Convenience function for no results detection.
+    
+    Args:
+        html_content: The HTML content to check for no results indicators
+        domain: Optional domain hint for better detection
+        
+    Returns:
+        Tuple of (has_no_results, no_results_type, details)
+    """
+    return captcha_detector.detect_no_results(html_content, domain)
 
 
 async def handle_captcha(

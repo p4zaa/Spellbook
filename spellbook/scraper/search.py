@@ -9,7 +9,7 @@ from crawl4ai.async_configs import BrowserConfig, CrawlerRunConfig, VirtualScrol
 from crawl4ai.async_dispatcher import MemoryAdaptiveDispatcher, SemaphoreDispatcher
 from crawl4ai import RateLimiter, CrawlerMonitor, DisplayMode
 
-from .captcha_detector import detect_captcha, handle_captcha
+from .captcha_detector import detect_captcha, detect_no_results, handle_captcha
 
 
 def _is_jupyter_environment() -> bool:
@@ -159,7 +159,7 @@ def _google_extraction_config(max_paginate: int = 3, pagination_mode: str = "mul
     # JS code: clicks next if exists, else stops
     js_code = """
     async function paginate() {
-        let nextBtn = document.querySelector("a#pnnext");
+            let nextBtn = document.querySelector("a#pnnext");
         if (nextBtn && !nextBtn.disabled) {
             nextBtn.click();
             await new Promise(r => setTimeout(r, 3000)); // wait for page load
@@ -175,6 +175,24 @@ def _google_extraction_config(max_paginate: int = 3, pagination_mode: str = "mul
     async function goBackIfNoResults() {
         // Delay before checking
         await new Promise(r => setTimeout(r, 2000)); // wait 2 seconds before executing
+
+        // Check if there are no results (Google's no results indicators)
+        let noResults1 = document.querySelector("#botstuff > div > div.mnr-c");
+        let noResults2 = document.querySelector("#OotqVd");
+        
+        if (noResults1) {
+            console.log("No search results found (detected #botstuff > div > div.mnr-c). Going back...");
+            window.history.back();  // go back to previous page
+            await new Promise(r => setTimeout(r, 3000)); // wait for previous page to load
+            return true;  // continue crawling after going back
+        }
+        
+        if (noResults2) {
+            console.log("No search results found (detected #OotqVd). Going back...");
+            window.history.back();  // go back to previous page
+            await new Promise(r => setTimeout(r, 3000)); // wait for previous page to load
+            return true;  // continue crawling after going back
+        }
 
         // Check if search results exist
         let hasResults = document.querySelector("#rso, .g, .MjjYud");
@@ -193,36 +211,43 @@ def _google_extraction_config(max_paginate: int = 3, pagination_mode: str = "mul
     await goBackIfNoResults();
     """
 
+    # wait_for should only check for elements, not perform navigation
     wait_for_logic = """
     () => {
         // Check if search results exist
         const resultsExist = document.querySelector("#rso, .g, .MjjYud");
-
-        if (resultsExist) {
-            return true; // we have results, proceed
-        } else {
-            // No results, go back in browser history
-            window.history.back();
-            await new Promise(r => setTimeout(r, 10000)); // wait for previous page to load
-            console.log("No results found. Going back...");
-            return false; // keep waiting until a valid page is loaded
+        
+        // Check if there are no results (Google's no results indicators)
+        const noResults1 = document.querySelector("#botstuff > div > div.mnr-c");
+        const noResults2 = document.querySelector("#OotqVd");
+        
+        if (noResults1) {
+            console.log("No search results found (detected #botstuff > div > div.mnr-c)");
+            return false; // No results, don't proceed
         }
+        
+        if (noResults2) {
+            console.log("No search results found (detected #OotqVd)");
+            return false; // No results, don't proceed
+        }
+        
+        return resultsExist !== null; // return true if elements found, false otherwise
     }"""
 
     return CrawlerRunConfig(
         extraction_strategy=JsonCssExtractionStrategy(schema=schema),
-        #js_code=[js_back_page],
-        #js_only=True,
+        js_code=[js_back_page] if pagination_mode == "single_window" else None,  # Enable navigation logic for single_window
+        js_only=pagination_mode == "single_window",  # Only for single_window mode
         scan_full_page=True,
-        magic=True,
-        simulate_user=True,
+        magic=True,  # Re-enable magic for better anti-bot handling
+        simulate_user=True,  # Re-enable user simulation
         override_navigator=True,
         #virtual_scroll_config=virtual_scroll_config,
         wait_until="networkidle",  # Wait for network to be idle
-        wait_for="#rso, .g, .MjjYud",  # Wait for search results to load
+        wait_for="#rso, .g, .MjjYud, div#OotqVd", #wait_for_logic,  #"#rso, .g, .MjjYud"
         # Anti-bot measures
         #check_robots_txt=True,  # Respect robots.txt
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        #user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         locale="en-US",
         timezone_id="America/New_York"
     )
@@ -288,6 +313,148 @@ def _get_captcha_wait_selectors(provider: str) -> str:
         return '#search, .g, .result, .pt-list-item, h1, h2, h3'  # Generic fallback
 
 
+async def _check_page_has_results(crawler, url: str, provider: str = "google") -> bool:
+    """
+    Check if a page has search results or is empty.
+    
+    Args:
+        crawler: The crawler instance to use
+        url: The URL to check
+        provider: The search provider (google, duckduckgo, etc.)
+        
+    Returns:
+        True if the page has results, False if empty
+    """
+    try:
+        # Create a simple config just for checking
+        check_config = CrawlerRunConfig(
+            extraction_strategy=JsonCssExtractionStrategy(schema={
+                "baseSelector": "body",
+                "fields": [{"name": "content", "type": "text"}]
+            }),
+            scan_full_page=False,  # Don't scan full page for efficiency
+            wait_until="domcontentloaded",  # Faster than networkidle
+            wait_for="body",  # Just wait for body to load
+        )
+        
+        result = await crawler.arun(url=url, config=check_config)
+        
+        if not result or not result.html:
+            return False
+        
+        # Check for no results indicators
+        html_content = result.html.lower()
+        
+        # Provider-specific no results indicators
+        if provider == "google":
+            no_results_indicators = [
+                "#botstuff > div > div.mnr-c",
+                "#ootqv",
+                "no results found",
+                "did not match any documents",
+                "your search did not match any documents",
+                "ไม่พบผลลัพธ์",  # Thai: no results found
+            ]
+            
+            # Check if we have actual search results
+            results_indicators = [
+                "#rso",
+                ".g",
+                ".mjjyud",
+                "search result",
+            ]
+        else:
+            # Generic indicators
+            no_results_indicators = [
+                "no results found",
+                "no matches found",
+                "did not match any documents",
+                "empty results",
+            ]
+            
+            results_indicators = [
+                "search result",
+                "result",
+                "listing",
+            ]
+        
+        # Check for no results indicators
+        for indicator in no_results_indicators:
+            if indicator in html_content:
+                return False
+        
+        # Check if we have actual search results
+        for indicator in results_indicators:
+            if indicator in html_content:
+                return True
+        
+        # If we can't find clear indicators, check extracted content
+        if result.extracted_content:
+            try:
+                import json
+                page_data = json.loads(result.extracted_content)
+                if page_data and len(page_data) > 0:
+                    return True
+            except:
+                pass
+        
+        return False
+        
+    except Exception as e:
+        print(f"   ⚠️  Error checking page: {e}")
+        return False
+
+
+async def _find_last_page_with_results(crawler, base_url: str, provider: str = "google", max_pages: int = 50) -> int:
+    """
+    Find the last page that has results using binary search approach.
+    
+    Args:
+        crawler: The crawler instance to use
+        base_url: The base search URL
+        provider: The search provider
+        max_pages: Maximum number of pages to check
+        
+    Returns:
+        The last page number that has results (0-based)
+    """
+    print(f"   🔍 Finding last page with results...")
+    
+    # Start with a high page number and work backwards
+    start_page = max_pages
+    end_page = 0
+    last_page_with_results = 0
+    
+    # Binary search approach to find the last page with results
+    while start_page >= end_page:
+        mid_page = (start_page + end_page) // 2
+        start_param = mid_page * 10
+        
+        # Construct test URL
+        if "?" in base_url:
+            test_url = f"{base_url}&start={start_param}"
+        else:
+            test_url = f"{base_url}?start={start_param}"
+            
+        print(f"   🔍 Checking page {mid_page} (start={start_param})...")
+        
+        has_results = await _check_page_has_results(crawler, test_url, provider)
+        
+        if has_results:
+            print(f"   ✅ Page {mid_page} has results")
+            last_page_with_results = mid_page
+            end_page = mid_page + 1  # Look for higher pages
+        else:
+            print(f"   ❌ Page {mid_page} is empty")
+            start_page = mid_page - 1  # Look for lower pages
+        
+        # Add a small delay to avoid rate limiting
+        await asyncio.sleep(1)
+    
+    print(f"   🎯 Last page with results: {last_page_with_results}")
+    return last_page_with_results
+
+
 def _create_google_dispatcher(enable_monitoring: bool = True) -> MemoryAdaptiveDispatcher:
     """Create a specialized dispatcher for Google crawling with anti-bot measures."""
     
@@ -301,7 +468,7 @@ def _create_google_dispatcher(enable_monitoring: bool = True) -> MemoryAdaptiveD
     
     # Memory adaptive dispatcher with conservative settings
     dispatcher = MemoryAdaptiveDispatcher(
-        memory_threshold_percent=75.0,  # Lower threshold for Google (more conservative)
+        memory_threshold_percent=100.0,  # Lower threshold for Google (more conservative)
         check_interval=2.0,             # Check memory every 2 seconds
         max_session_permit=3,           # Limit to 3 concurrent sessions for Google
         rate_limiter=rate_limiter,
@@ -357,6 +524,7 @@ async def search_urls(
     timebias: bool = True,
     max_paginate: Optional[int] = None,
     pagination_mode: str = "multi_window",
+    reverse_order: bool = True,
 ) -> List[str]:
     """Search a provider for URLs matching a keyword.
 
@@ -372,6 +540,7 @@ async def search_urls(
         timebias: When provider is "pantip", include time bias filter (newest first).
         max_paginate: When provider is "google", crawl up to this many pages (defaults to what's implied by max_results).
         pagination_mode: Either "multi_window" (default, opens separate windows for each page) or "single_window" (uses JavaScript to click next page buttons in same window).
+        reverse_order: When True (default), start from the last page and work backwards. When False, start from the first page.
 
     Returns:
         A list of cleaned absolute URLs, deduplicated and trimmed to max_results.
@@ -390,13 +559,26 @@ async def search_urls(
             result = await crawler.arun(url=url, config=config)
             urls: List[str] = []
             
-            # Check for CAPTCHA using the reusable detector
+            # Check for CAPTCHA and no results using the reusable detector
             if result:
                 is_captcha, captcha_type, details = detect_captcha(
                     url=result.url or "",
                     html_content=result.html or "",
                     domain="google.com" if provider_name == "google" else ""
                 )
+                
+                # Check for no results
+                has_no_results, no_results_type, no_results_details = detect_no_results(
+                    html_content=result.html or "",
+                    domain="google.com" if provider_name == "google" else ""
+                )
+                
+                if has_no_results:
+                    print(f"⚠️  No results detected: {no_results_type}")
+                    print(f"   Details: {no_results_details}")
+                    print(f"   URL: {url}")
+                    print("   🔄 Going back to previous page...")
+                    return []  # Return empty list for no results
                 
                 if is_captcha:
                     # For non-headless mode, we need to handle CAPTCHA differently
@@ -428,7 +610,7 @@ async def search_urls(
                         )
                         
                         # Wait for CAPTCHA to be solved by monitoring the page
-                        max_wait_time = 300  # 5 minutes
+                        max_wait_time = 600  # 10 minutes (increased from 5 minutes)
                         wait_interval = 5    # Check every 5 seconds
                         waited_time = 0
                         
@@ -494,7 +676,7 @@ async def search_urls(
                         )
                         
                         # Wait for CAPTCHA to be solved by monitoring the page
-                        max_wait_time = 300  # 5 minutes - same as non-headless since we have visible window
+                        max_wait_time = 600  # 10 minutes (increased from 5 minutes)
                         wait_interval = 5    # Check every 5 seconds
                         waited_time = 0
                         
@@ -578,11 +760,39 @@ async def search_urls(
             else:
                 # Multi-window mode: use arun_many with specialized dispatcher
                 config = _google_extraction_config(max_paginate=1, pagination_mode="multi_window")
-                urls_to_fetch = []
-                for page in range(pages):
-                    start = page * per_page
-                    url = _google_search_url(keyword, lang=lang, region=region, start=start, site=site)
-                    urls_to_fetch.append(url)
+                
+                # Find the last page with results to avoid crawling empty pages
+                if reverse_order:
+                    print(f"   🔍 Finding last page with results to optimize crawling...")
+                    last_page_with_results = await _find_last_page_with_results(
+                        crawler=None,  # Will be passed later
+                        base_url=_google_search_url(keyword, lang=lang, region=region, start=0, site=site),
+                        provider="google",
+                        max_pages=pages
+                    )
+                    
+                    if last_page_with_results == 0:
+                        print(f"   ⚠️  No results found for {keyword} on {site}")
+                        return []
+                    
+                    # Generate URLs only up to the last page with results
+                    urls_to_fetch = []
+                    for page in range(last_page_with_results + 1):
+                        start = page * per_page
+                        url = _google_search_url(keyword, lang=lang, region=region, start=start, site=site)
+                        urls_to_fetch.append(url)
+                    
+                    # Reverse order to start from last page
+                    urls_to_fetch.reverse()
+                    print(f"   🔄 Reversed URL order: crawling {len(urls_to_fetch)} pages (up to page {last_page_with_results})")
+                else:
+                    # Forward order - generate all pages
+                    urls_to_fetch = []
+                    for page in range(pages):
+                        start = page * per_page
+                        url = _google_search_url(keyword, lang=lang, region=region, start=start, site=site)
+                        urls_to_fetch.append(url)
+                    print(f"   📄 Using forward URL order: starting from page 1")
                 
                 # Create specialized Google dispatcher
                 dispatcher = _create_google_dispatcher(enable_monitoring=True)
@@ -595,6 +805,22 @@ async def search_urls(
                             config=config,
                             dispatcher=dispatcher
                         )
+                        
+                        # Ensure results is a list
+                        if results is None:
+                            print("   ⚠️  arun_many returned None, falling back to individual requests...")
+                            results = []
+                            for url in urls_to_fetch:
+                                try:
+                                    result = await crawler.arun(url=url, config=config)
+                                    results.append(result)
+                                except Exception as url_error:
+                                    print(f"   ❌ Failed to fetch {url}: {url_error}")
+                                    results.append(None)
+                        elif not isinstance(results, list):
+                            print(f"   ⚠️  arun_many returned unexpected type: {type(results)}")
+                            results = []
+                            
                     except Exception as e:
                         print(f"   ⚠️  Error in arun_many: {e}")
                         print("   🔄 Falling back to individual requests...")
@@ -630,7 +856,7 @@ async def search_urls(
                                 )
                                 
                                 async with AsyncWebCrawler(config=captcha_browser_config) as captcha_crawler:
-                                    max_wait_time = 300  # 5 minutes
+                                    max_wait_time = 1800  # 10 minutes (increased from 5 minutes)
                                     wait_interval = 5    # Check every 5 seconds
                                     waited_time = 0
                                     
@@ -703,8 +929,8 @@ async def search_urls(
 
 
 # Convenience helpers for common scenarios
-async def search_google(keyword: str, *, max_results: int = 20, site: Optional[str] = None, pagination_mode: str = "multi_window", **kwargs) -> List[str]:
-    return await search_urls(keyword, provider="google", max_results=max_results, site=site, pagination_mode=pagination_mode, **kwargs)
+async def search_google(keyword: str, *, max_results: int = 20, site: Optional[str] = None, pagination_mode: str = "multi_window", reverse_order: bool = True, **kwargs) -> List[str]:
+    return await search_urls(keyword, provider="google", max_results=max_results, site=site, pagination_mode=pagination_mode, reverse_order=reverse_order, **kwargs)
 
 
 async def search_duckduckgo(keyword: str, *, max_results: int = 20, site: Optional[str] = None, **kwargs) -> List[str]:
@@ -726,6 +952,7 @@ async def search_from_url(
     return_schema: bool = True,
     max_paginate: Optional[int] = None,
     pagination_mode: str = "multi_window",
+    reverse_order: bool = True,
 ) -> Union[List[Dict[str, Any]], List[str]]:
     """Generic search: pass a search URL; config is inferred from base URL unless a schema is provided.
 
@@ -737,6 +964,7 @@ async def search_from_url(
         headless: Run browser headless.
         max_results: If provided, limit the number of items returned.
         return_schema: When True (default), return full JSON-like records per schema; when False, return a list of URLs only.
+        reverse_order: When True (default), start from the last page and work backwards. When False, start from the first page.
 
     Returns:
         A list of dicts as extracted by the schema (JSON-like). The 'url' field is cleaned/normalized when possible.
@@ -784,7 +1012,6 @@ async def search_from_url(
                     # Multi-window mode: build explicit page URLs
                     if search_url.find("&start=") == -1 and search_url.find("?start=") == -1:
                         # Build explicit page URLs from base query
-                        parsed = urlparse(search_url)
                         # We cannot easily recompose query safely here without parsing; reuse helper by extracting q/gl/hl if desired.
                         # Fallback: append start param for pages > 0
                         base = search_url
@@ -798,6 +1025,13 @@ async def search_from_url(
                     else:
                         # If 'start' exists already, assume caller provided full pagination; fetch as-is only
                         urls_to_fetch = [search_url]
+
+            # Apply reverse order if requested (for multi-window mode with multiple URLs)
+            if len(urls_to_fetch) > 1 and reverse_order:
+                urls_to_fetch.reverse()
+                print(f"   🔄 Reversed URL order: starting from page {len(urls_to_fetch)} (backward)")
+            elif len(urls_to_fetch) > 1:
+                print(f"   📄 Using forward URL order: starting from page 1")
 
             # Fetch pages and aggregate using arun_many with dispatcher
             if provider == "google":
@@ -860,7 +1094,7 @@ async def search_from_url(
                         )
                         
                         async with AsyncWebCrawler(config=captcha_browser_config) as captcha_crawler:
-                            max_wait_time = 300  # 5 minutes
+                            max_wait_time = 600  # 10 minutes (increased from 5 minutes)
                             wait_interval = 5    # Check every 5 seconds
                             waited_time = 0
                             
