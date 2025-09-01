@@ -1,30 +1,52 @@
+# Spellbook - Data Science and NLP Utilities
+# 
+# This package now uses lazy dependency loading. Dependencies are only installed
+# when you actually use the functionality that requires them.
+#
+# INSTALLATION OPTIONS:
+#
+# 1. Minimal installation (core functionality only):
+#    pip install -e .
+#
+# 2. Install with specific feature groups:
+#    pip install -e .[viz]      # Visualization features
+#    pip install -e .[text]     # Text processing features  
+#    pip install -e .[scraping] # Web scraping features
+#    pip install -e .[network]  # Network analysis features
+#
+# 3. Install with all features:
+#    pip install -e .[full]
+#
+# 4. Install for development:
+#    pip install -e .[dev]
+
 # Core dependencies (required for basic functionality)
 polars
 numpy
 scikit-learn
-
-# Data processing dependencies
 fastexcel
-xlsxwriter
 
-# Visualization dependencies (optional)
-matplotlib
-wordcloud
+# Optional: Visualization dependencies
+# matplotlib
+# wordcloud
 
-# Text processing dependencies (optional)
-pythainlp
-nltk
+# Optional: Text processing dependencies
+# pythainlp
+# nltk
 
-# Additional utilities (optional)
-bloxs
+# Optional: Web scraping dependencies
+# crawl4ai
+# selenium
+# requests
+# httpx
 
-# Network analysis (optional)
-networkx
+# Optional: Network analysis dependencies
+# networkx
 
-# HTTP requests (optional)
-requests
-httpx
+# Optional: Additional utilities
+# bloxs
 
-# Web scraping (optional)
-crawl4ai
-asyncio
+# Development dependencies (optional)
+# pytest
+# black
+# flake8

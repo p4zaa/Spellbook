@@ -31,7 +31,16 @@ class CaptchaDetector:
             "please wait",
             "checking your browser",
             "human verification",
-            "bot detection"
+            "bot detection",
+            "suspicious activity",
+            "unusual activity",
+            "verify you're not a robot",
+            "prove you're human",
+            "security verification",
+            "access denied",
+            "blocked",
+            "temporarily blocked",
+            "rate limited"
         ]
         
         # No results indicators by domain
@@ -44,7 +53,14 @@ class CaptchaDetector:
         
         # Common CAPTCHA redirect patterns by domain
         self.captcha_redirects = {
-            "google.com": ["google.com/sorry", "google.com/recaptcha"],
+            "google.com": [
+                "google.com/sorry", 
+                "google.com/recaptcha", 
+                "google.com/challenge",
+                "google.com/security",
+                "google.com/verify",
+                "google.com/checkpoint"
+            ],
             "cloudflare.com": ["cloudflare.com/challenge", "cloudflare.com/security"],
             "duckduckgo.com": ["duckduckgo.com/sorry", "duckduckgo.com/challenge"],
             "bing.com": ["bing.com/sorry", "bing.com/security"],

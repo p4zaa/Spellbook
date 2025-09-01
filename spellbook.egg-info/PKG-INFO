@@ -1,3 +1,92 @@
+Metadata-Version: 2.4
+Name: spellbook
+Version: 0.1.0
+Summary: A collection of useful data science and NLP utilities with intelligent dependency management.
+Home-page: https://github.com/p4zaa/SpellBook
+Author: Pathompong Muangthong
+Author-email: pathompong.workspace@gmail.com
+Maintainer: Pathompong Muangthong
+Maintainer-email: pathompong.workspace@gmail.com
+License: MIT
+Project-URL: Bug Reports, https://github.com/p4zaa/SpellBook/issues
+Project-URL: Source, https://github.com/p4zaa/SpellBook
+Project-URL: Documentation, https://github.com/p4zaa/SpellBook#readme
+Keywords: data-science nlp machine-learning text-processing visualization web-scraping
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Data Scientists
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Scientific/Engineering :: Information Analysis
+Classifier: Topic :: Text Processing :: Linguistic
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.20.0
+Requires-Dist: polars>=0.20.0
+Requires-Dist: fastexcel>=0.10.0
+Requires-Dist: scikit-learn>=1.0.0
+Provides-Extra: viz
+Requires-Dist: matplotlib>=3.5.0; extra == "viz"
+Requires-Dist: wordcloud>=1.8.0; extra == "viz"
+Provides-Extra: text
+Requires-Dist: pythainlp>=3.0.0; extra == "text"
+Requires-Dist: nltk>=3.7; extra == "text"
+Provides-Extra: scraping
+Requires-Dist: selenium>=4.0.0; extra == "scraping"
+Requires-Dist: crawl4ai>=0.1.0; extra == "scraping"
+Requires-Dist: requests>=2.25.0; extra == "scraping"
+Requires-Dist: httpx>=0.20.0; extra == "scraping"
+Provides-Extra: network
+Requires-Dist: networkx>=2.6.0; extra == "network"
+Provides-Extra: utils
+Requires-Dist: bloxs>=0.1.0; extra == "utils"
+Provides-Extra: full
+Requires-Dist: matplotlib>=3.5.0; extra == "full"
+Requires-Dist: wordcloud>=1.8.0; extra == "full"
+Requires-Dist: pythainlp>=3.0.0; extra == "full"
+Requires-Dist: nltk>=3.7; extra == "full"
+Requires-Dist: selenium>=4.0.0; extra == "full"
+Requires-Dist: crawl4ai>=0.1.0; extra == "full"
+Requires-Dist: requests>=2.25.0; extra == "full"
+Requires-Dist: httpx>=0.20.0; extra == "full"
+Requires-Dist: networkx>=2.6.0; extra == "full"
+Requires-Dist: bloxs>=0.1.0; extra == "full"
+Provides-Extra: dev
+Requires-Dist: matplotlib>=3.5.0; extra == "dev"
+Requires-Dist: wordcloud>=1.8.0; extra == "dev"
+Requires-Dist: pythainlp>=3.0.0; extra == "dev"
+Requires-Dist: nltk>=3.7; extra == "dev"
+Requires-Dist: selenium>=4.0.0; extra == "dev"
+Requires-Dist: crawl4ai>=0.1.0; extra == "dev"
+Requires-Dist: requests>=2.25.0; extra == "dev"
+Requires-Dist: httpx>=0.20.0; extra == "dev"
+Requires-Dist: networkx>=2.6.0; extra == "dev"
+Requires-Dist: bloxs>=0.1.0; extra == "dev"
+Requires-Dist: pytest>=6.0.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: flake8>=4.0.0; extra == "dev"
+Requires-Dist: mypy>=0.900; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: maintainer
+Dynamic: maintainer-email
+Dynamic: project-url
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
 # Spellbook
 
 A collection of useful data science and NLP utilities for efficient data processing, text analysis, and visualization.
